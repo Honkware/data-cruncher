@@ -18,7 +18,7 @@ pip install -r requirements.txt
   python gen_openai.py
   ```
 
-- If you want to use the Oobabooga Text Gen web UI, use the following command:
+- If you want to use the Oobabooga Text Gen web UI API, use the following command:
 
   ```
   python gen_local.py
