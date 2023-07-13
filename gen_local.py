@@ -11,13 +11,13 @@ URI = f'http://{HOST}/api/v1/generate'
 
 def generate_model_response(user_input, num_responses):
     prompt = f"""
-    
+
     ### Instruction: Generate 2 training data pairs strictly in JSONL as your response. The 'input' should be a distinctive user query related to 'The Industrial Revolution', and the 'output' should be your unique, brief response. Ensure your response strictly aligns with the viewpoint, style, and tone of the original author, as if the author is directly answering the user's query. Each 'input' and 'output' pair should be unique and directly address the query without any additional context or information.
 
     ### Response: {{"input": "What were some of the major technological advancements during the industrial revolution?", "output": "Some of the major technological advancements during the industrial revolution included the steam engine, the spinning jenny, the power loom, and the assembly line."}},{{"input": "How did the industrial revolution impact society and economics?", "output": "The industrial revolution had a profound impact on society and economics. It led to increased production, which resulted in lower prices for goods and services. This led to an increase in consumerism and a shift towards a more market-based economy. Additionally, the Industrial Revolution brought about new job opportunities in manufacturing and related industries."}}
-    
+
     ### Instruction: Generate {num_responses} training data pairs strictly in JSONL as your response. The 'input' should be a distinctive user query related to:'{user_input}'
-    The 'output' should be your unique, brief response. Ensure your response strictly aligns with the viewpoint, style, and tone of the original author, as if the author is directly answering the user's query. Each 'input' and 'output' pair should be unique and directly address the query without any additional context or information. 
+    The 'output' should be your unique, brief response. Ensure your response strictly aligns with the viewpoint, style, and tone of the original author, as if the author is directly answering the user's query. Each 'input' and 'output' pair should be unique and directly address the query without any additional context or information.
 
     ### Response:"""
     request = {
@@ -25,7 +25,7 @@ def generate_model_response(user_input, num_responses):
     }
 
     response = requests.post(URI, json=request)
-    
+
     if response.status_code == 200:
         response_content = response.content.decode("utf-8")
         response_json = json.loads(response_content)
@@ -64,6 +64,8 @@ def process_text(user_input, total_runs, batch_size):
             for pair in model_response:
                 if len(responses) >= total_generations:
                     break
+                pair.replace('\\', "")
+                json_pair = json.loads(pair)
                 writer.write(pair)
                 responses.append(pair)
     return '\n'.join(str(resp) for resp in responses)
