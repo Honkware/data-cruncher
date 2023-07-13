@@ -6,6 +6,7 @@ import time
 import nltk
 import argparse
 import tiktoken
+import json
 
 nltk.download('punkt')
 
@@ -23,7 +24,7 @@ def generate_model_response(api_key, user_input, num_responses):
                 messages=[
                     {"role": "user", "content": f"Generate {num_responses} training data pairs in JSONL format as your response. The 'input' should be a distinctive user query related to '{user_input}', and the 'output' should be your unique, brief response. Ensure your response strictly aligns with the viewpoint, style, and tone of the original author, as if the author is directly answering the user's query. Each 'input' and 'output' pair should be unique and directly address the query without any additional context or information."}
                 ],
-                max_tokens=1000,  
+                max_tokens=1000,
                 api_key=api_key,
             )
         except openai.error.RateLimitError:
@@ -37,7 +38,7 @@ def process_text(api_key, user_input, total_generations):
     total_tokens = count_tokens(user_input)
     print(f"Estimated total tokens in input: {total_tokens}")
     with jsonlines.open('chat.jsonl', mode='w') as writer:
-        while len(responses) < total_generations:  
+        while len(responses) < total_generations:
             try:
                 model_response = generate_model_response(api_key, user_input, total_generations)
                 response = model_response['choices'][0]['message']['content']
@@ -47,7 +48,9 @@ def process_text(api_key, user_input, total_generations):
                     pair = pair.strip()
                     if len(responses) >= total_generations:
                         break
-                    writer.write({"input": user_input, "output": pair})
+                    pair.replace('\\', "")
+                    json_pair = json.loads(pair)
+                    writer.write(json_pair)
                     responses.append(pair)
             except openai.error.RateLimitError:
                 print("Rate limit hit, waiting and retrying...")
@@ -60,7 +63,7 @@ def process_text(api_key, user_input, total_generations):
             except Exception as e:
                 print(f"An error occurred: {e}")
                 continue
-    return '\n'.join(responses) 
+    return '\n'.join(responses)
 
 def define_gradio_interface():
     """Define the Gradio interface for the chat."""
@@ -68,7 +71,7 @@ def define_gradio_interface():
         fn=process_text,
         inputs=[
             gr.inputs.Textbox(label="OpenAI API Key", type="password"),
-            gr.components.Textbox(label="User Input", lines=20), 
+            gr.components.Textbox(label="User Input", lines=20),
             gr.inputs.Slider(minimum=1, maximum=1000, step=1, default=10, label="Total Generations"),
         ],
         outputs=gr.components.Textbox(label="Chat History"),
